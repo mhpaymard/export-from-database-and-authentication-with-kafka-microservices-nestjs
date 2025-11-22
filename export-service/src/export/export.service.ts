@@ -4,6 +4,10 @@ import { QueryBuilderService } from './query-builder.service';
 import { FileGeneratorService } from './file-generator.service';
 import { ExportQueryDto } from './dto/export-query.dto';
 
+export interface ProgressCallback {
+  (progress: number, message: string): void;
+}
+
 @Injectable()
 export class ExportService {
   private readonly logger = new Logger(ExportService.name);
@@ -14,7 +18,10 @@ export class ExportService {
     private readonly fileGeneratorService: FileGeneratorService,
   ) {}
 
-  async processExportRequest(dto: ExportQueryDto): Promise<{
+  async processExportRequest(
+    dto: ExportQueryDto, 
+    progressCallback?: ProgressCallback,
+  ): Promise<{
     success: boolean;
     data?: string;
     isBase64?: boolean;
@@ -31,8 +38,16 @@ export class ExportService {
         };
       }
 
+      if (progressCallback) {
+        progressCallback(5, 'Verifying authentication...');
+      }
+
       this.jwtVerifyService.verifyAdminRole(dto.token);
       this.logger.log(`Admin verified for export request: table=${dto.table}, format=${dto.format}`);
+
+      if (progressCallback) {
+        progressCallback(10, 'Building query...');
+      }
 
       // Step 2: Build WHERE clause with date filters
       let finalWhereClause = dto.where;
@@ -54,6 +69,10 @@ export class ExportService {
           : dateFilter;
       }
 
+      if (progressCallback) {
+        progressCallback(20, 'Executing database query...');
+      }
+
       // Step 3: Execute database query
       const data = await this.queryBuilderService.executeQuery(
         dto.table,
@@ -65,11 +84,19 @@ export class ExportService {
 
       this.logger.log(`Query executed: ${data.length} records retrieved from ${dto.table}`);
 
+      if (progressCallback) {
+        progressCallback(60, `Retrieved ${data.length} records. Generating ${dto.format} file...`);
+      }
+
       // Step 3: Generate file in requested format
       const fileData = await this.fileGeneratorService.generate(data, dto.format, dto.table);
       const contentType = this.fileGeneratorService.getContentType(dto.format);
       const extension = this.fileGeneratorService.getFileExtension(dto.format);
       const filename = `${dto.table}_export.${extension}`;
+
+      if (progressCallback) {
+        progressCallback(90, 'Finalizing export...');
+      }
 
       // Step 4: Convert to base64 for Kafka transmission
       let dataToSend: string;
@@ -77,6 +104,10 @@ export class ExportService {
         dataToSend = fileData.toString('base64');
       } else {
         dataToSend = fileData as string;
+      }
+
+      if (progressCallback) {
+        progressCallback(100, 'Export completed successfully!');
       }
 
       // Step 5: Return result

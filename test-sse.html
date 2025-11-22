@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SSE Export Test</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        #log { 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            max-height: 400px; 
+            overflow-y: scroll; 
+            background: #f5f5f5;
+        }
+        .log-entry { margin: 5px 0; }
+        .progress { color: blue; }
+        .completed { color: green; font-weight: bold; }
+        .failed { color: red; font-weight: bold; }
+        button { padding: 10px; margin: 5px; }
+        input { padding: 5px; margin: 5px; width: 400px; }
+    </style>
+</head>
+<body>
+    <h1>SSE Export Test</h1>
+    
+    <div>
+        <label>Token:</label><br>
+        <input type="text" id="token" placeholder="Paste JWT token here" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjksInVzZXJuYW1lIjoidGVzdGFkbWluIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzYzODE0MzA5LCJleHAiOjE3NjM5MDA3MDl9.KFCsHoBl-mJmTeEBKONxomLiIVPUaM73DFEBK3CVlI4">
+    </div>
+    
+    <div>
+        <label>Table:</label>
+        <input type="text" id="table" value="users">
+        
+        <label>Format:</label>
+        <select id="format">
+            <option value="json">JSON</option>
+            <option value="csv">CSV</option>
+            <option value="excel">Excel</option>
+            <option value="pdf">PDF</option>
+        </select>
+        
+        <button onclick="submitExport()">Submit Export Job</button>
+    </div>
+    
+    <div id="jobInfo" style="margin: 10px 0;"></div>
+    
+    <h3>Progress Log:</h3>
+    <div id="log"></div>
+    
+    <script>
+        let eventSource = null;
+        let currentJobId = null;
+        
+        function log(message, className = '') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + className;
+            entry.textContent = new Date().toLocaleTimeString() + ' - ' + message;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        async function submitExport() {
+            const token = document.getElementById('token').value;
+            const table = document.getElementById('table').value;
+            const format = document.getElementById('format').value;
+            
+            if (!token) {
+                alert('Please enter a token');
+                return;
+            }
+            
+            try {
+                log('Submitting export job...');
+                
+                const response = await fetch('http://localhost:3000/api/export/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ table, format })
+                });
+                
+                const result = await response.json();
+                currentJobId = result.jobId;
+                
+                log('Job submitted! JobID: ' + currentJobId);
+                log('Stream URL: ' + result.streamUrl);
+                log('Download URL: ' + result.downloadUrl);
+                
+                document.getElementById('jobInfo').innerHTML = `
+                    <strong>Job ID:</strong> ${currentJobId}<br>
+                    <button onclick="streamProgress()">Connect SSE</button>
+                    <button onclick="downloadFile()">Download File</button>
+                `;
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'failed');
+            }
+        }
+        
+        function streamProgress() {
+            if (!currentJobId) {
+                alert('No job ID available');
+                return;
+            }
+            
+            const token = document.getElementById('token').value;
+            
+            if (eventSource) {
+                eventSource.close();
+            }
+            
+            log('Connecting to SSE stream...');
+            
+            // EventSource doesn't support custom headers, so we need to use a different approach
+            // For now, we'll use fetch with readable stream
+            fetch('http://localhost:3000/api/export/stream/' + currentJobId, {
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'text/event-stream'
+                }
+            }).then(response => {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                function read() {
+                    reader.read().then(({ done, value }) => {
+                        if (done) {
+                            log('Stream closed', 'completed');
+                            return;
+                        }
+                        
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n');
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.substring(6));
+                                    const msg = `[${data.status}] ${data.progress}% - ${data.message || ''}`;
+                                    
+                                    if (data.status === 'completed') {
+                                        log(msg, 'completed');
+                                    } else if (data.status === 'failed') {
+                                        log(msg + ' - Error: ' + data.error, 'failed');
+                                    } else {
+                                        log(msg, 'progress');
+                                    }
+                                } catch (e) {
+                                    // Ignore parse errors
+                                }
+                            }
+                        }
+                        
+                        read();
+                    });
+                }
+                
+                read();
+            }).catch(error => {
+                log('SSE Error: ' + error.message, 'failed');
+            });
+        }
+        
+        async function downloadFile() {
+            if (!currentJobId) {
+                alert('No job ID available');
+                return;
+            }
+            
+            const token = document.getElementById('token').value;
+            
+            log('Downloading file...');
+            
+            window.open('http://localhost:3000/api/export/download/' + currentJobId + '?token=' + token, '_blank');
+        }
+    </script>
+</body>
+</html>
