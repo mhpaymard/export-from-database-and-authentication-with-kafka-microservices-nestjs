@@ -1,0 +1,37 @@
+### تست کامل Auth Service از طریق Gateway
+
+### 1. Register - ثبت‌نام کاربر جدید
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "password123",
+  "role": "user"
+}
+
+### 2. Login - ورود کاربر
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "john_doe",
+  "password": "password123"
+}
+
+### 3. Get Profile - دریافت پروفایل (جایگزین TOKEN را با token دریافتی از login کنید)
+GET http://localhost:3000/api/auth/profile
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### 4. تست با کاربر Admin (از دیتابیس)
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### 5. Health Check
+GET http://localhost:3000/health

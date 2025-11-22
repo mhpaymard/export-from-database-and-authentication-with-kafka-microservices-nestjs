@@ -1,0 +1,15 @@
+{
+  "name": "docker-test-scripts",
+  "version": "1.0.0",
+  "description": "Test scripts for PostgreSQL and Kafka connections",
+  "private": true,
+  "scripts": {
+    "test:postgres": "node test-postgres.js",
+    "test:kafka": "node test-kafka.js",
+    "test:all": "npm run test:postgres && npm run test:kafka"
+  },
+  "dependencies": {
+    "pg": "^8.11.3",
+    "kafkajs": "^2.2.4"
+  }
+}
