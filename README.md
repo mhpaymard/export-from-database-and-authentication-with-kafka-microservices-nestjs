@@ -40,56 +40,64 @@
 
 ## 🎯 مراحل پیاده‌سازی
 
-### مرحله 0️⃣: راه‌اندازی پیش‌نیازها
-- [ ] نصب Docker و Docker Compose
-- [ ] راه‌اندازی PostgreSQL در Docker
-- [ ] راه‌اندازی Apache Kafka با KRaft mode در Docker
-- [ ] ایجاد ساختار پروژه اصلی
-- [ ] تنظیمات محیط توسعه (environment variables)
-- [ ] تست اتصال به PostgreSQL
-- [ ] تست اتصال به Kafka
-- [ ] ایجاد دیتابیس نمونه و جدول‌های تست
+### مرحله 0️⃣: راه‌اندازی پیش‌نیازها ✅
+- [x] نصب Docker و Docker Compose
+- [x] راه‌اندازی PostgreSQL در Docker
+- [x] راه‌اندازی Apache Kafka با KRaft mode در Docker
+- [x] ایجاد ساختار پروژه اصلی
+- [x] تنظیمات محیط توسعه (environment variables)
+- [x] تست اتصال به PostgreSQL
+- [x] تست اتصال به Kafka
+- [x] ایجاد دیتابیس نمونه و جدول‌های تست
 
-### مرحله 1️⃣: پیاده‌سازی API Gateway
-- [ ] ایجاد پروژه NestJS برای Gateway
-- [ ] نصب وابستگی‌های Kafka (KafkaJS)
-- [ ] پیکربندی اتصال به Kafka
-- [ ] پیاده‌سازی Proxy Pattern برای ارسال درخواست‌ها
-- [ ] مسیریابی درخواست‌ها به سرویس‌های مختلف
-- [ ] اضافه کردن Global Exception Filter
-- [ ] پیکربندی CORS
-- [ ] پیاده‌سازی Health Check endpoint
-- [ ] تست کامل Gateway
+### مرحله 1️⃣: پیاده‌سازی API Gateway ✅
+- [x] ایجاد پروژه NestJS برای Gateway
+- [x] نصب وابستگی‌های Kafka (KafkaJS)
+- [x] پیکربندی اتصال به Kafka
+- [x] پیاده‌سازی Proxy Pattern برای ارسال درخواست‌ها
+- [x] مسیریابی درخواست‌ها به سرویس‌های مختلف
+- [x] اضافه کردن Global Exception Filter
+- [x] پیکربندی CORS
+- [x] پیاده‌سازی Health Check endpoint
+- [x] تست کامل Gateway
 
-### مرحله 2️⃣: پیاده‌سازی Authentication & Authorization Service
-- [ ] ایجاد پروژه NestJS برای Auth Service
-- [ ] نصب وابستگی‌های Kafka
-- [ ] پیکربندی Kafka Consumer/Producer
-- [ ] تعریف مدل‌های User و Role
-- [ ] پیاده‌سازی JWT Authentication
-- [ ] تعریف دو نقش: `admin` (دسترسی کامل) و `user` (بدون دسترسی به export)
-- [ ] پیاده‌سازی Guards برای Role-Based Access Control
-- [ ] پیاده‌سازی endpoints:
+### مرحله 2️⃣: پیاده‌سازی Authentication & Authorization Service ✅
+- [x] ایجاد پروژه NestJS برای Auth Service
+- [x] نصب وابستگی‌های Kafka
+- [x] پیکربندی Kafka Consumer/Producer
+- [x] تعریف مدل‌های User و Role
+- [x] پیاده‌سازی JWT Authentication
+- [x] تعریف دو نقش: `admin` (دسترسی کامل) و `user` (بدون دسترسی به export)
+- [x] پیاده‌سازی Guards برای Role-Based Access Control
+- [x] پیاده‌سازی endpoints:
   - POST /auth/register
   - POST /auth/login
   - GET /auth/profile
-- [ ] Exception Handling سفارشی
-- [ ] تست احراز هویت و مجوزدهی
+- [x] Exception Handling سفارشی
+- [x] تست احراز هویت و مجوزدهی
 
-### مرحله 3️⃣: پیاده‌سازی Export Database Service
-- [ ] ایجاد پروژه NestJS برای Export Service
-- [ ] نصب TypeORM و وابستگی PostgreSQL
-- [ ] پیکربندی اتصال به PostgreSQL
-- [ ] نصب وابستگی‌های Kafka
-- [ ] پیکربندی Kafka Consumer/Producer
-- [ ] پیاده‌سازی Query Builder پویا
-- [ ] پیاده‌سازی endpoint برای دریافت نام جدول
-- [ ] پیاده‌سازی فیلتر ستون‌ها (انتخاب ستون‌های خاص)
-- [ ] پیاده‌سازی فیلتر شرایط (WHERE conditions)
-- [ ] پیاده‌سازی Pagination
-- [ ] Exception Handling برای خطاهای دیتابیس
-- [ ] Validation برای ورودی‌ها
-- [ ] تست کامل Export Service
+### مرحله 3️⃣: پیاده‌سازی Export Database Service ✅
+- [x] ایجاد پروژه NestJS برای Export Service
+- [x] نصب TypeORM و وابستگی PostgreSQL
+- [x] پیکربندی اتصال به PostgreSQL
+- [x] نصب وابستگی‌های Kafka
+- [x] پیکربندی Kafka Consumer/Producer
+- [x] پیاده‌سازی Query Builder پویا
+- [x] پیاده‌سازی endpoint برای دریافت نام جدول
+- [x] پیاده‌سازی فیلتر ستون‌ها (انتخاب ستون‌های خاص)
+- [x] پیاده‌سازی فیلتر شرایط (WHERE conditions)
+- [x] پیاده‌سازی Pagination
+- [x] Exception Handling برای خطاهای دیتابیس
+- [x] Validation برای ورودی‌ها
+- [x] تست کامل Export Service
+- [x] **پیاده‌سازی Export Formats:**
+  - [x] JSON (با parse خودکار)
+  - [x] CSV
+  - [x] Excel (XLSX)
+  - [x] PDF (با فرمت جدول)
+- [x] **پیاده‌سازی Schema Metadata API**
+- [x] **پیاده‌سازی Date Range Filtering**
+- [x] **پیاده‌سازی Download Mode (inline/download)**
 
 ---
 
@@ -192,7 +200,8 @@ GET  /health
 POST /api/auth/register
 POST /api/auth/login
 GET  /api/auth/profile
-POST /api/export/query
+POST /api/export/query        # Export data in JSON/CSV/Excel/PDF
+POST /api/export/schema       # Get database metadata
 ```
 
 ### Authentication Service (Internal - via Kafka)
@@ -247,6 +256,11 @@ Topics produced: export.response
 - [x] Health Check endpoints
 - [x] Environment Variables Management
 - [x] CORS Configuration
+- [x] **Export به فرمت‌های مختلف (JSON, CSV, Excel, PDF)**
+- [x] **JSON Parsing خودکار**
+- [x] **Database Schema Metadata API**
+- [x] **Date Range Filtering**
+- [x] **Download Mode (inline/attachment)**
 
 ---
 
@@ -328,7 +342,22 @@ http://localhost:3000/api/docs
 | 0️⃣ پیش‌نیازها | ✅ کامل شد | Docker, PostgreSQL, Kafka راه‌اندازی شد |
 | 1️⃣ Gateway | ✅ کامل شد | NestJS, Kafka integration, Swagger |
 | 2️⃣ Auth Service | ✅ کامل شد | JWT, bcrypt, TypeORM, Kafka |
-| 3️⃣ Export Service | ⏳ در انتظار تایید | - |
+| 3️⃣ Export Service | ✅ کامل شد | Query Builder, Multi-format Export, PDF Generation |
+
+### 🎉 قابلیت‌های پیاده‌سازی شده در Export Service:
+
+| قابلیت | وضعیت | توضیحات |
+|--------|-------|---------|
+| JSON Export | ✅ | با parse خودکار داده‌ها |
+| CSV Export | ✅ | با header و encoding صحیح |
+| Excel Export | ✅ | فرمت XLSX با ستون‌های مشخص |
+| PDF Export | ✅ | جدول فرمت شده با pagination خودکار |
+| Schema Metadata | ✅ | لیست جداول، ستون‌ها، row count |
+| Date Filtering | ✅ | fromDate, toDate, dateColumn |
+| Download Mode | ✅ | inline JSON یا file attachment |
+| Column Selection | ✅ | انتخاب ستون‌های خاص |
+| WHERE Clause | ✅ | فیلتر سفارشی SQL |
+| Pagination | ✅ | limit و offset |
 
 ---
 
@@ -399,6 +428,13 @@ gateway/
 
 **Database Export (Proxy to export-service):**
 - `POST /api/export/query` - استخراج داده (فقط admin)
+  - Formats: JSON, CSV, Excel, PDF
+  - با فیلتر تاریخ، انتخاب ستون، WHERE clause
+  - Download mode: inline یا file attachment
+- `POST /api/export/schema` - دریافت metadata دیتابیس (فقط admin)
+  - لیست تمام جداول
+  - ستون‌ها با type و nullable
+  - تعداد رکوردها
 
 **5. Features پیاده‌سازی شده:**
 - ✅ **Global Exception Filter**: مدیریت یکپارچه خطاها
@@ -659,3 +695,333 @@ KAFKA_CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk
 ---
 
 **✅ مرحله 0 کامل شد! آماده شروع مرحله 1️⃣ (API Gateway) هستید؟**
+
+---
+
+### [مرحله 2 - Authentication Service] ✅ کامل شد - 2025-11-22
+
+تمام قابلیت‌های احراز هویت و مجوزدهی با JWT و Role-Based Access Control پیاده‌سازی شد.
+
+---
+
+### [مرحله 3 - Export Database Service] ✅ کامل شد - 2025-11-22
+
+#### ✅ موارد پیاده‌سازی شده:
+
+**1. ساختار پروژه:**
+```
+export-service/
+├── src/
+│   ├── export/
+│   │   ├── dto/
+│   │   │   └── export-query.dto.ts
+│   │   ├── export.service.ts
+│   │   ├── query-builder.service.ts
+│   │   ├── file-generator.service.ts
+│   │   ├── export.module.ts
+│   │   └── export.controller.ts
+│   ├── kafka/
+│   │   ├── kafka.service.ts
+│   │   └── kafka.module.ts
+│   ├── auth/
+│   │   └── jwt.service.ts
+│   ├── app.module.ts
+│   └── main.ts
+├── .env
+└── package.json
+```
+
+**2. Dependencies نصب شده:**
+- TypeORM & PostgreSQL driver
+- KafkaJS
+- ExcelJS (برای فایل‌های Excel)
+- csv-writer (برای فایل‌های CSV)
+- pdfkit & @types/pdfkit (برای PDF)
+- class-validator & class-transformer
+
+**3. قابلیت‌های Export:**
+
+**📄 Export Formats:**
+
+**JSON Format:**
+- ✅ Parse خودکار به JavaScript object
+- ✅ فرمت readable با indent
+- ✅ مناسب برای API responses
+
+**CSV Format:**
+- ✅ Header row با نام ستون‌ها
+- ✅ UTF-8 encoding
+- ✅ Compatible با Excel و Google Sheets
+
+**Excel Format:**
+- ✅ فرمت XLSX
+- ✅ Auto-sizing columns
+- ✅ Header formatting
+- ✅ Multiple sheets (نام جدول)
+
+**PDF Format (جدید):**
+- ✅ جدول فرمت شده با border
+- ✅ Landscape A4 برای ستون‌های بیشتر
+- ✅ Auto-pagination با header در هر صفحه
+- ✅ Footer با page number و record count
+- ✅ Title و timestamp
+
+**4. Schema Metadata API:**
+
+**Endpoint:** `POST /api/export/schema`
+
+**قابلیت‌ها:**
+- ✅ لیست تمام جداول دیتابیس
+- ✅ ستون‌های هر جدول با:
+  - نام ستون
+  - نوع داده (data type)
+  - nullable یا not null
+- ✅ تعداد رکوردهای هر جدول
+- ✅ فقط برای admin
+
+**نمونه Response:**
+```json
+{
+  "success": true,
+  "tables": [
+    {
+      "tableName": "users",
+      "rowCount": 10,
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": false
+        },
+        {
+          "name": "username",
+          "type": "character varying",
+          "nullable": false
+        }
+      ]
+    }
+  ]
+}
+```
+
+**5. Date Range Filtering:**
+
+**پارامترها:**
+- `fromDate` (ISO 8601): فیلتر از تاریخ
+- `toDate` (ISO 8601): فیلتر تا تاریخ
+- `dateColumn` (string): نام ستون تاریخ (default: `created_at`)
+
+**مثال:**
+```json
+{
+  "table": "users",
+  "format": "pdf",
+  "fromDate": "2025-11-22T00:00:00.000Z",
+  "toDate": "2025-11-22T23:59:59.999Z",
+  "dateColumn": "created_at"
+}
+```
+
+**نحوه کار:**
+- ایجاد WHERE clause خودکار
+- ترکیب با WHERE سفارشی کاربر
+- Parameterized queries (امنیت SQL injection)
+
+**6. Download Mode:**
+
+**پارامتر:** `download` (boolean)
+
+**Modes:**
+- `download: false` (default):
+  - JSON: پاسخ inline با data parsed
+  - CSV/Excel/PDF: base64 string در JSON
+  
+- `download: true`:
+  - CSV/Excel/PDF: فایل attachment با headers
+  - JSON: همچنان inline (exception)
+
+**Headers برای Download:**
+```
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="users_export.pdf"
+```
+
+**7. امنیت و Validation:**
+
+**✅ SQL Injection Prevention:**
+- استفاده از TypeORM Query Builder
+- Parameterized queries
+- Whitelist validation برای table/column names
+
+**✅ Authorization:**
+- تایید JWT token
+- بررسی نقش admin
+- Error handling برای unauthorized
+
+**✅ Input Validation:**
+- class-validator decorators
+- @IsIn برای فرمت‌ها
+- @IsDateString برای تاریخ‌ها
+- @IsOptional برای فیلدهای اختیاری
+
+#### 📝 نمونه Requests:
+
+**1. Export JSON with Date Filter:**
+```bash
+curl -X POST http://localhost:3000/api/export/query \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "table": "users",
+    "format": "json",
+    "fromDate": "2025-11-22T00:00:00.000Z",
+    "toDate": "2025-11-22T23:59:59.999Z"
+  }'
+```
+
+**2. Download PDF with Columns:**
+```bash
+curl -X POST http://localhost:3000/api/export/query \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "table": "users",
+    "format": "pdf",
+    "download": true,
+    "columns": ["id", "username", "email", "role", "created_at"],
+    "limit": 100
+  }' -o users.pdf
+```
+
+**3. Get Database Schema:**
+```bash
+curl -X POST http://localhost:3000/api/export/schema \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json"
+```
+
+**4. Export CSV with WHERE:**
+```bash
+curl -X POST http://localhost:3000/api/export/query \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "table": "users",
+    "format": "csv",
+    "download": true,
+    "where": "role = '\''admin'\''"
+  }' -o admin-users.csv
+```
+
+#### 🎯 ویژگی‌های PDF Generator:
+
+**Layout:**
+- Landscape A4 (برای ستون‌های بیشتر)
+- Margins: 50px
+- Font: Helvetica (Built-in)
+
+**Table Design:**
+- Border برای تمام cells
+- Header با font bold
+- Auto text truncation با ellipsis
+- Column width مساوی
+
+**Pagination:**
+- تشخیص خودکار نیاز به صفحه جدید
+- Header تکرار در هر صفحه
+- Page numbers در footer
+- Total record count
+
+**Performance:**
+- Stream-based generation
+- Memory efficient برای داده‌های زیاد
+- Promise-based async/await
+
+#### 🔧 تنظیمات Export Service:
+
+```env
+PORT=3002
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres123
+DB_NAME=microservices_db
+
+KAFKA_BROKER=localhost:9092
+KAFKA_CLIENT_ID=export-service
+KAFKA_GROUP_ID=export-service-group
+
+JWT_SECRET=your-secret-key-here
+```
+
+#### 📚 Swagger Documentation:
+
+**Export Query Endpoint Examples:**
+- Export all users (JSON)
+- Export specific columns
+- Export with filter (WHERE)
+- Export with pagination
+- Export as CSV
+- Export as Excel
+- **Export as PDF** (جدید)
+- **Download PDF file** (جدید)
+- **PDF with date filter** (جدید)
+- **Download CSV/Excel** (جدید)
+
+**Schema Endpoint:**
+- Get all database metadata
+- Tables, columns, types, row counts
+
+#### 📌 نکات مهم:
+
+1. **PDF Performance**: برای جداول بزرگ (>1000 row) از limit استفاده کنید
+2. **Date Format**: فقط ISO 8601 پذیرفته می‌شود
+3. **Column Names**: باید دقیقاً با نام ستون‌های دیتابیس مطابقت داشته باشد
+4. **Download Mode**: فقط برای CSV/Excel/PDF کار می‌کند، JSON همیشه inline است
+5. **Schema API**: کمک می‌کند column names صحیح را پیدا کنید
+
+#### 🎨 PDF Sample Output:
+
+```
+┌─────────────────────────────────────────────┐
+│     Export: users                           │
+│     Generated: 11/22/2025, 2:30:45 PM      │
+├────┬──────────┬─────────────────┬──────────┤
+│ id │ username │ email           │ role     │
+├────┼──────────┼─────────────────┼──────────┤
+│ 1  │ admin    │ admin@test.com  │ admin    │
+│ 2  │ john_doe │ john@test.com   │ user     │
+└────┴──────────┴─────────────────┴──────────┘
+
+     Page 1 of 1 | Total Records: 2
+```
+
+#### ✅ Testing Checklist:
+
+- [x] JSON export با parse صحیح
+- [x] CSV export با header
+- [x] Excel export قابل باز شدن
+- [x] PDF export با فرمت جدول
+- [x] Schema API با metadata کامل
+- [x] Date filtering با تاریخ‌های مختلف
+- [x] Download mode برای فایل‌ها
+- [x] Inline mode برای JSON
+- [x] Column selection
+- [x] WHERE clause filtering
+- [x] Pagination
+- [x] Authorization (admin only)
+- [x] Error handling
+
+#### 🔍 فایل تست:
+
+اسکریپت جامع تست در `test-export-features.sh` ایجاد شده که تمام قابلیت‌ها را تست می‌کند.
+
+**اجرای تست:**
+```bash
+cd /d/6\ -\ hooshan-kavosh-borna/1\ -\ first-tasks
+bash test-export-features.sh
+```
+
+---
+
+**🎉 تمام مراحل پروژه با موفقیت کامل شد!**
