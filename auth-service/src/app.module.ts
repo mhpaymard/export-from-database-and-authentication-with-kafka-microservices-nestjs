@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { KafkaModule } from './kafka/kafka.module';
+import { ProtoModule } from './proto/proto.module';
 import { User } from './users/entities/user.entity';
 
 @Module({
@@ -12,6 +13,7 @@ import { User } from './users/entities/user.entity';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ProtoModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

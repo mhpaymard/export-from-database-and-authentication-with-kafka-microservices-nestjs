@@ -5,6 +5,7 @@ import { KafkaModule } from './kafka/kafka.module';
 import { AuthModule } from './auth/auth.module';
 import { ExportModule } from './export/export.module';
 import { HealthModule } from './health/health.module';
+import { ProtoModule } from './proto/proto.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
@@ -14,6 +15,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ProtoModule,
     KafkaModule,
     AuthModule,
     ExportModule,

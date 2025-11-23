@@ -36,14 +36,17 @@ export class AuthController {
       const response = await this.kafkaService.sendRequest(
         process.env.KAFKA_AUTH_REQUEST_TOPIC || 'auth.request',
         process.env.KAFKA_AUTH_RESPONSE_TOPIC || 'auth.response',
-        {
-          action: 'register',
-          data: registerDto,
-        },
+        registerDto,
+        'RegisterRequest',
         parseInt(process.env.KAFKA_REQUEST_TIMEOUT || '30000'),
       );
 
-      return response.data || response;
+      // Response is already decoded from Protobuf by KafkaService
+      // Return clean JSON object to client
+      return {
+        message: response.message || 'User registered successfully',
+        user: response.user,
+      };
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to register user',
@@ -79,14 +82,17 @@ export class AuthController {
       const response = await this.kafkaService.sendRequest(
         process.env.KAFKA_AUTH_REQUEST_TOPIC || 'auth.request',
         process.env.KAFKA_AUTH_RESPONSE_TOPIC || 'auth.response',
-        {
-          action: 'login',
-          data: loginDto,
-        },
+        loginDto,
+        'LoginRequest',
         parseInt(process.env.KAFKA_REQUEST_TIMEOUT || '30000'),
       );
 
-      return response.data || response;
+      // Response is already decoded from Protobuf by KafkaService
+      // Return clean JSON object to client
+      return {
+        access_token: response.token,
+        user: response.user,
+      };
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to login',
@@ -125,14 +131,14 @@ export class AuthController {
       const response = await this.kafkaService.sendRequest(
         process.env.KAFKA_AUTH_REQUEST_TOPIC || 'auth.request',
         process.env.KAFKA_AUTH_RESPONSE_TOPIC || 'auth.response',
-        {
-          action: 'profile',
-          token,
-        },
+        { token },
+        'VerifyTokenRequest',
         parseInt(process.env.KAFKA_REQUEST_TIMEOUT || '30000'),
       );
 
-      return response.data || response;
+      // Response is already decoded from Protobuf by KafkaService
+      // Return clean user object to client
+      return response.user;
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to get profile',

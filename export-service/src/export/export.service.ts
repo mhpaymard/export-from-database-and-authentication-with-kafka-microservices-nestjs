@@ -20,6 +20,7 @@ export class ExportService {
     isBase64?: boolean;
     contentType?: string;
     filename?: string;
+    format?: string;
     error?: string;
   }> {
     try {
@@ -71,21 +72,26 @@ export class ExportService {
       const extension = this.fileGeneratorService.getFileExtension(dto.format);
       const filename = `${dto.table}_export.${extension}`;
 
-      // Step 4: Convert to base64 for Kafka transmission
-      let dataToSend: string;
+      // Step 4: Convert to Buffer for Protobuf bytes field
+      // Protobuf bytes field expects Buffer, not base64 string
+      let dataBuffer: Buffer;
       if (Buffer.isBuffer(fileData)) {
-        dataToSend = fileData.toString('base64');
+        // Already a Buffer (PDF, Excel)
+        dataBuffer = fileData;
       } else {
-        dataToSend = fileData as string;
+        // Convert string to Buffer (JSON, CSV)
+        dataBuffer = Buffer.from(fileData as string, 'utf-8');
       }
 
-      // Step 5: Return result
+      // Step 5: Return result with Buffer
+      // Protobuf will handle encoding Buffer to bytes field
       return {
         success: true,
-        data: dataToSend,
-        isBase64: Buffer.isBuffer(fileData),
+        data: dataBuffer.toString('base64'), // Convert to base64 for Protobuf bytes field
+        isBase64: true, // Always true now
         contentType,
         filename,
+        format: dto.format,
       };
     } catch (error) {
       this.logger.error(`Export failed: ${error.message}`, error.stack);

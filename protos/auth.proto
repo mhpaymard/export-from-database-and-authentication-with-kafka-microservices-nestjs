@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package auth;
+
+// ==================== Request Messages ====================
+
+message RegisterRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+  string role = 4;
+  string firstName = 5;
+  string lastName = 6;
+  string correlationId = 7;
+}
+
+message LoginRequest {
+  string usernameOrEmail = 1;
+  string password = 2;
+  string correlationId = 3;
+}
+
+message VerifyTokenRequest {
+  string token = 1;
+  string correlationId = 2;
+}
+
+// ==================== Response Messages ====================
+
+message RegisterResponse {
+  bool success = 1;
+  string error = 2;
+  int32 statusCode = 3;
+  RegisterData data = 4;
+  string correlationId = 5;
+}
+
+message RegisterData {
+  string message = 1;
+  User user = 2;
+  string token = 3;
+}
+
+message LoginResponse {
+  bool success = 1;
+  string error = 2;
+  int32 statusCode = 3;
+  LoginData data = 4;
+  string correlationId = 5;
+}
+
+message LoginData {
+  string access_token = 1;
+  User user = 2;
+}
+
+message VerifyTokenResponse {
+  bool success = 1;
+  string error = 2;
+  int32 statusCode = 3;
+  User user = 4;
+  string correlationId = 5;
+}
+
+// ==================== Common Messages ====================
+
+message User {
+  int32 id = 1;
+  string username = 2;
+  string email = 3;
+  string role = 4;
+  string firstName = 5;
+  string lastName = 6;
+  string createdAt = 7;
+  string updatedAt = 8;
+}

@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package export;
+
+// ==================== Request Messages ====================
+
+message ExportQueryRequest {
+  string table = 1;
+  repeated string columns = 2;
+  string where = 3;
+  string fromDate = 4;
+  string toDate = 5;
+  string dateColumn = 6;
+  string format = 7;
+  bool download = 8;
+  int32 limit = 9;
+  int32 offset = 10;
+  string token = 11;
+  string correlationId = 12;
+}
+
+message SchemaRequest {
+  string token = 1;
+  string type = 2;  // "schema"
+  string correlationId = 3;
+}
+
+// ==================== Response Messages ====================
+
+message ExportQueryResponse {
+  bool success = 1;
+  string error = 2;
+  int32 statusCode = 3;
+  bytes data = 4;  // Raw bytes for binary data or UTF-8 for text
+  bool isBase64 = 5;
+  string contentType = 6;
+  string filename = 7;
+  string format = 8;
+  string table = 9;
+  int32 recordCount = 10;
+  string correlationId = 11;
+}
+
+message SchemaResponse {
+  bool success = 1;
+  string error = 2;
+  int32 statusCode = 3;
+  repeated TableSchema schema = 4;
+  string correlationId = 5;
+}
+
+// ==================== Common Messages ====================
+
+message TableSchema {
+  string tableName = 1;
+  int32 rowCount = 2;
+  repeated ColumnSchema columns = 3;
+}
+
+message ColumnSchema {
+  string name = 1;
+  string type = 2;
+  bool nullable = 3;
+}

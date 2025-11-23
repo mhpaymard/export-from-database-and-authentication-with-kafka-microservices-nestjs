@@ -6,6 +6,7 @@ import {
   Res,
   HttpStatus,
   HttpException,
+  Logger,
 } from '@nestjs/common';
 import { 
   ApiTags, 
@@ -21,6 +22,8 @@ import { ExportQueryDto } from './dto/export-query.dto';
 @ApiTags('Export')
 @Controller('api/export')
 export class ExportController {
+  private readonly logger = new Logger(ExportController.name);
+
   constructor(private readonly kafkaService: KafkaService) {}
 
   @Post('query')
@@ -268,9 +271,11 @@ Export data from any database table with filtering and pagination support.
           ...exportQueryDto,
           token, // Pass JWT token to Export Service for verification
         },
+        'ExportQueryRequest',
         60000, // 60 seconds timeout (exports can take time)
       );
 
+      // Response is already decoded from Protobuf by KafkaService
       // Check if export was successful
       if (!result.success || result.error) {
         throw new HttpException(
@@ -279,26 +284,40 @@ Export data from any database table with filtering and pagination support.
         );
       }
 
-      // Parse data based on format
-      let parsedData = result.data;
       const actualFormat = result.format || exportQueryDto.format;
       
-      if (actualFormat === 'json' && typeof result.data === 'string' && !result.isBase64) {
-        try {
-          parsedData = JSON.parse(result.data);
-        } catch (e) {
-          // If parsing fails, keep as string
-          parsedData = result.data;
+      // Protobuf bytes field is decoded as base64 string
+      // We need to convert it back to the original format
+      let parsedData: any;
+      let buffer: Buffer;
+
+      if (result.data) {
+        // Decode base64 to Buffer
+        buffer = Buffer.from(result.data, 'base64');
+        
+        // For JSON format: Buffer → string → JSON parse
+        if (actualFormat === 'json') {
+          const jsonString = buffer.toString('utf-8');
+          try {
+            parsedData = JSON.parse(jsonString);
+          } catch (e) {
+            this.logger.error('Failed to parse JSON from buffer:', e);
+            parsedData = jsonString;
+          }
+        } else {
+          // For CSV: also convert to string
+          if (actualFormat === 'csv') {
+            parsedData = buffer.toString('utf-8');
+          } else {
+            // For PDF/Excel: keep as buffer
+            parsedData = buffer;
+          }
         }
       }
 
       // Handle download mode
       if (exportQueryDto.download && actualFormat !== 'json') {
         // For CSV, Excel, and PDF: send as downloadable file
-        const buffer = result.isBase64 
-          ? Buffer.from(result.data, 'base64')
-          : Buffer.from(result.data);
-        
         res.set({
           'Content-Type': result.contentType || 'application/octet-stream',
           'Content-Disposition': `attachment; filename="${result.filename || 'export.' + actualFormat}"`,
@@ -307,15 +326,22 @@ Export data from any database table with filtering and pagination support.
         res.send(buffer);
       } else {
         // For JSON or download=false: return inline JSON response
-        res.status(HttpStatus.OK).json({
+        // Don't include filename and contentType for inline JSON
+        const responseData: any = {
           success: true,
           table: exportQueryDto.table,
           format: actualFormat,
           recordCount: Array.isArray(parsedData) ? parsedData.length : 0,
           data: parsedData,
-          contentType: result.contentType,
-          filename: result.filename,
-        });
+        };
+
+        // Only include these for non-JSON formats or when download mode is requested
+        if (actualFormat !== 'json' || exportQueryDto.download) {
+          responseData.contentType = result.contentType;
+          responseData.filename = result.filename;
+        }
+
+        res.status(HttpStatus.OK).json(responseData);
       }
     } catch (error) {
       if (error instanceof HttpException) {
@@ -401,18 +427,19 @@ Returns a list of tables with:
       // Send schema request to Export Service via Kafka
       const result = await this.kafkaService.sendRequest<{
         success: boolean;
-        schema?: any[];
+        tables?: any[];
         error?: string;
       }>(
         'export.request',
         'export.response',
         {
-          type: 'schema',
           token,
         },
+        'SchemaRequest',
         30000, // 30 seconds timeout
       );
 
+      // Response is already decoded from Protobuf by KafkaService
       // Check if schema retrieval was successful
       if (!result.success || result.error) {
         throw new HttpException(
@@ -421,10 +448,10 @@ Returns a list of tables with:
         );
       }
 
-      // Return schema information
+      // Return schema information (tables array is already decoded)
       res.status(HttpStatus.OK).json({
         success: true,
-        tables: result.schema,
+        tables: result.tables,
       });
     } catch (error) {
       if (error instanceof HttpException) {

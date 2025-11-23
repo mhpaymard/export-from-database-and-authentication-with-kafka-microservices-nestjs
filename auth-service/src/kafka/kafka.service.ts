@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config';
 import { Kafka, Consumer, Producer, EachMessagePayload } from 'kafkajs';
 import { AuthService } from '../auth/auth.service';
+import { ProtoService } from '../proto/proto.service';
 
 @Injectable()
 export class KafkaService implements OnModuleInit, OnModuleDestroy {
@@ -13,6 +14,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private configService: ConfigService,
     private authService: AuthService,
+    private protoService: ProtoService,
   ) {
     this.kafka = new Kafka({
       clientId: 'auth-service',
@@ -73,72 +75,113 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
   private async handleMessage(payload: EachMessagePayload) {
     const { topic, partition, message } = payload;
-    const value = message.value?.toString();
-
-    if (!value) {
+    
+    if (!message.value) {
       this.logger.warn('Received empty message');
       return;
     }
 
     try {
-      const request = JSON.parse(value);
-      this.logger.log(`Processing message: ${request.action} (correlationId: ${request.correlationId})`);
+      // Extract correlationId and messageType from headers
+      const correlationId = message.headers?.correlationId?.toString();
+      const messageType = message.headers?.messageType?.toString();
 
+      if (!correlationId || !messageType) {
+        this.logger.warn('Received message without correlationId or messageType in headers');
+        return;
+      }
+
+      this.logger.log(`Processing ${messageType} (correlationId: ${correlationId})`);
+
+      let request: any;
       let response: any;
+      let responseType: string;
 
-      switch (request.action) {
-        case 'register':
-          response = await this.authService.register(request.data);
+      // Decode protobuf message based on messageType
+      switch (messageType) {
+        case 'RegisterRequest':
+          request = this.protoService.decode(this.protoService.RegisterRequest, Buffer.from(message.value));
+          response = await this.authService.register(request);
+          responseType = 'RegisterResponse';
           break;
 
-        case 'login':
-          response = await this.authService.login(request.data);
+        case 'LoginRequest':
+          request = this.protoService.decode(this.protoService.LoginRequest, Buffer.from(message.value));
+          response = await this.authService.login(request);
+          responseType = 'LoginResponse';
           break;
 
-        case 'profile':
-        case 'validate':
-          const token = request.token || request.data?.token;
-          if (!token) {
-            throw new Error('Token is required');
-          }
-          response = await this.authService.validateToken(token);
+        case 'VerifyTokenRequest':
+          request = this.protoService.decode(this.protoService.VerifyTokenRequest, Buffer.from(message.value));
+          response = await this.authService.validateToken(request.token);
+          responseType = 'VerifyTokenResponse';
           break;
 
         default:
-          throw new Error(`Unknown action: ${request.action}`);
+          throw new Error(`Unknown message type: ${messageType}`);
       }
 
-      await this.sendResponse(request.correlationId, { success: true, data: response });
+      await this.sendResponse(correlationId, responseType, { success: true, ...response });
     } catch (error) {
       this.logger.error('Error processing message', error);
       
-      const request = JSON.parse(value);
-      await this.sendResponse(request.correlationId, {
-        success: false,
-        error: error.message || 'Internal server error',
-        statusCode: error.status || 500,
-      });
+      const correlationId = message.headers?.correlationId?.toString();
+      const messageType = message.headers?.messageType?.toString();
+      
+      if (correlationId && messageType) {
+        // Determine response type based on request type
+        let responseType: string;
+        if (messageType === 'RegisterRequest') responseType = 'RegisterResponse';
+        else if (messageType === 'LoginRequest') responseType = 'LoginResponse';
+        else if (messageType === 'VerifyTokenRequest') responseType = 'VerifyTokenResponse';
+        else responseType = 'ErrorResponse';
+
+        await this.sendResponse(correlationId, responseType, {
+          success: false,
+          error: error.message || 'Internal server error',
+        });
+      }
     }
   }
 
-  private async sendResponse(correlationId: string, data: any) {
+  private async sendResponse(correlationId: string, messageType: string, data: any) {
     const responseTopic = this.configService.get<string>('KAFKA_AUTH_RESPONSE_TOPIC');
 
     try {
+      // Select the appropriate protobuf message type for response
+      let protoType: any;
+      switch (messageType) {
+        case 'RegisterResponse':
+          protoType = this.protoService.RegisterResponse;
+          break;
+        case 'LoginResponse':
+          protoType = this.protoService.LoginResponse;
+          break;
+        case 'VerifyTokenResponse':
+          protoType = this.protoService.VerifyTokenResponse;
+          break;
+        default:
+          throw new Error(`Unknown response type: ${messageType}`);
+      }
+
+      // Encode the response to protobuf binary
+      const encodedResponse = this.protoService.encode(protoType, data);
+
       await this.producer.send({
         topic: responseTopic,
         messages: [
           {
             key: correlationId,
-            value: JSON.stringify({
+            value: encodedResponse,
+            headers: {
               correlationId,
-              ...data,
-            }),
+              messageType,
+            },
           },
         ],
       });
 
-      this.logger.log(`Response sent for correlationId: ${correlationId}`);
+      this.logger.log(`Response sent for correlationId: ${correlationId}, messageType: ${messageType}`);
     } catch (error) {
       this.logger.error('Failed to send response', error);
     }

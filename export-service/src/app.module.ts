@@ -7,9 +7,11 @@ import { ExportService } from './export/export.service';
 import { QueryBuilderService } from './export/query-builder.service';
 import { FileGeneratorService } from './export/file-generator.service';
 import { KafkaService } from './kafka/kafka.service';
+import { ProtoModule } from './proto/proto.module';
 
 @Module({
   imports: [
+    ProtoModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',

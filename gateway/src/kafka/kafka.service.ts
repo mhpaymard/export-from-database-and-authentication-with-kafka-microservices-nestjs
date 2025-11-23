@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { Kafka, Producer, Consumer, EachMessagePayload } from 'kafkajs';
+import { ProtoService } from '../proto/proto.service';
 
 @Injectable()
 export class KafkaService implements OnModuleInit, OnModuleDestroy {
@@ -9,7 +10,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   private consumers: Map<string, Consumer> = new Map();
   private pendingRequests: Map<string, {resolve: Function, reject: Function, timeoutId: NodeJS.Timeout}> = new Map();
 
-  constructor() {
+  constructor(private readonly protoService: ProtoService) {
     this.kafka = new Kafka({
       clientId: process.env.KAFKA_CLIENT_ID || 'api-gateway',
       brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
@@ -54,18 +55,44 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     await authConsumer.run({
       eachMessage: async ({ message }: EachMessagePayload) => {
         try {
-          const response = JSON.parse(message.value?.toString() || '{}');
-          this.logger.debug(`Received auth response for correlationId: ${response.correlationId}`);
+          // Extract correlationId from headers
+          const correlationId = message.headers?.correlationId?.toString();
           
-          const pending = this.pendingRequests.get(response.correlationId);
+          if (!correlationId) {
+            this.logger.warn('Received auth response without correlationId');
+            return;
+          }
+
+          // Decode protobuf message based on message type from headers
+          const messageType = message.headers?.messageType?.toString();
+          let response: any;
+
+          switch (messageType) {
+            case 'RegisterResponse':
+              response = this.protoService.decode(this.protoService.RegisterResponse, Buffer.from(message.value));
+              break;
+            case 'LoginResponse':
+              response = this.protoService.decode(this.protoService.LoginResponse, Buffer.from(message.value));
+              break;
+            case 'VerifyTokenResponse':
+              response = this.protoService.decode(this.protoService.VerifyTokenResponse, Buffer.from(message.value));
+              break;
+            default:
+              this.logger.warn(`Unknown auth message type: ${messageType}`);
+              return;
+          }
+
+          this.logger.debug(`Received auth response for correlationId: ${correlationId}`);
+          
+          const pending = this.pendingRequests.get(correlationId);
           if (pending) {
             clearTimeout(pending.timeoutId);
-            this.pendingRequests.delete(response.correlationId);
+            this.pendingRequests.delete(correlationId);
             
             if (response.success === false || response.error) {
               pending.reject(new Error(response.error || 'Request failed'));
             } else {
-              // Resolve with full response object, not just data
+              // Resolve with full response object
               pending.resolve(response);
             }
           }
@@ -89,18 +116,41 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     await exportConsumer.run({
       eachMessage: async ({ message }: EachMessagePayload) => {
         try {
-          const response = JSON.parse(message.value?.toString() || '{}');
-          this.logger.debug(`Received export response for correlationId: ${response.correlationId}`);
+          // Extract correlationId from headers
+          const correlationId = message.headers?.correlationId?.toString();
           
-          const pending = this.pendingRequests.get(response.correlationId);
+          if (!correlationId) {
+            this.logger.warn('Received export response without correlationId');
+            return;
+          }
+
+          // Decode protobuf message based on message type from headers
+          const messageType = message.headers?.messageType?.toString();
+          let response: any;
+
+          switch (messageType) {
+            case 'ExportQueryResponse':
+              response = this.protoService.decode(this.protoService.ExportQueryResponse, Buffer.from(message.value));
+              break;
+            case 'SchemaResponse':
+              response = this.protoService.decode(this.protoService.SchemaResponse, Buffer.from(message.value));
+              break;
+            default:
+              this.logger.warn(`Unknown export message type: ${messageType}`);
+              return;
+          }
+
+          this.logger.debug(`Received export response for correlationId: ${correlationId}`);
+          
+          const pending = this.pendingRequests.get(correlationId);
           if (pending) {
             clearTimeout(pending.timeoutId);
-            this.pendingRequests.delete(response.correlationId);
+            this.pendingRequests.delete(correlationId);
             
             if (response.success === false || response.error) {
               pending.reject(new Error(response.error || 'Request failed'));
             } else {
-              // Resolve with full response object, not just data
+              // Resolve with full response object
               pending.resolve(response);
             }
           }
@@ -153,12 +203,13 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Send a request and wait for response (Request-Reply Pattern with permanent consumer)
+   * Send a request and wait for response (Request-Reply Pattern with Protobuf)
    */
   async sendRequest<T = any>(
     requestTopic: string,
     responseTopic: string,
     payload: any,
+    messageType: string,
     timeout: number = 30000,
   ): Promise<T> {
     return new Promise(async (resolve, reject) => {
@@ -173,22 +224,48 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
       this.pendingRequests.set(correlationId, { resolve, reject, timeoutId });
 
       try {
-        // Send the request
+        // Select the appropriate protobuf message type
+        let protoType: any;
+        switch (messageType) {
+          case 'RegisterRequest':
+            protoType = this.protoService.RegisterRequest;
+            break;
+          case 'LoginRequest':
+            protoType = this.protoService.LoginRequest;
+            break;
+          case 'VerifyTokenRequest':
+            protoType = this.protoService.VerifyTokenRequest;
+            break;
+          case 'ExportQueryRequest':
+            protoType = this.protoService.ExportQueryRequest;
+            break;
+          case 'SchemaRequest':
+            protoType = this.protoService.SchemaRequest;
+            break;
+          default:
+            throw new Error(`Unknown message type: ${messageType}`);
+        }
+
+        // Encode the payload to protobuf binary
+        const encodedPayload = this.protoService.encode(protoType, payload);
+
+        // Send the request with correlationId and messageType in headers
         await this.producer.send({
           topic: requestTopic,
           messages: [
             {
               key: correlationId,
-              value: JSON.stringify({
+              value: encodedPayload,
+              headers: {
                 correlationId,
-                ...payload,
-                timestamp: Date.now(),
-              }),
+                messageType,
+                timestamp: Date.now().toString(),
+              },
             },
           ],
         });
 
-        this.logger.debug(`Request sent to ${requestTopic} with correlationId: ${correlationId}`);
+        this.logger.debug(`Request sent to ${requestTopic} with correlationId: ${correlationId}, messageType: ${messageType}`);
       } catch (error) {
         clearTimeout(timeoutId);
         this.logger.error(`Error in sendRequest to ${requestTopic}:`, error.message);
