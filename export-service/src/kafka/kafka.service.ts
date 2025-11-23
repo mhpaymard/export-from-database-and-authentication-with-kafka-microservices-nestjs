@@ -73,7 +73,7 @@ export class KafkaService implements OnModuleInit {
               const schema = await this.exportService.getDatabaseSchema();
               result = {
                 success: true,
-                tables: schema,
+                schema: schema,  // استفاده از schema به جای tables
               };
               responseType = 'SchemaResponse';
               break;

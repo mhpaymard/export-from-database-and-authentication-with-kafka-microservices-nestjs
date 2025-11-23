@@ -427,7 +427,7 @@ Returns a list of tables with:
       // Send schema request to Export Service via Kafka
       const result = await this.kafkaService.sendRequest<{
         success: boolean;
-        tables?: any[];
+        schema?: any[];
         error?: string;
       }>(
         'export.request',
@@ -448,10 +448,10 @@ Returns a list of tables with:
         );
       }
 
-      // Return schema information (tables array is already decoded)
+      // Return schema information (schema array is already decoded)
       res.status(HttpStatus.OK).json({
         success: true,
-        tables: result.tables,
+        tables: result.schema,  // schema از proto را به tables تبدیل می‌کنیم برای API response
       });
     } catch (error) {
       if (error instanceof HttpException) {
