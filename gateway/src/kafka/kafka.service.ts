@@ -1,6 +1,5 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { Kafka, Producer, Consumer, EachMessagePayload } from 'kafkajs';
-import { JobStoreService } from '../export/job-store.service';
 
 @Injectable()
 export class KafkaService implements OnModuleInit, OnModuleDestroy {
@@ -10,10 +9,7 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
   private consumers: Map<string, Consumer> = new Map();
   private pendingRequests: Map<string, {resolve: Function, reject: Function, timeoutId: NodeJS.Timeout}> = new Map();
 
-  constructor(
-    @Inject(forwardRef(() => JobStoreService))
-    private readonly jobStore: JobStoreService,
-  ) {
+  constructor() {
     this.kafka = new Kafka({
       clientId: process.env.KAFKA_CLIENT_ID || 'api-gateway',
       brokers: [process.env.KAFKA_BROKER || 'localhost:9092'],
@@ -116,34 +112,6 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     
     this.consumers.set('export.response', exportConsumer);
     this.logger.log('✅ Permanent consumer started for export.response');
-
-    // Consumer for export.progress
-    const progressConsumer = this.kafka.consumer({
-      groupId: 'gateway-export-progress-group',
-    });
-    
-    await progressConsumer.connect();
-    await progressConsumer.subscribe({ topic: 'export.progress', fromBeginning: false });
-    
-    await progressConsumer.run({
-      eachMessage: async ({ message }: EachMessagePayload) => {
-        try {
-          const progressData = JSON.parse(message.value?.toString() || '{}');
-          this.logger.debug(`Received progress for job: ${progressData.jobId}`);
-          
-          const { jobId, progress, message: progressMessage } = progressData;
-          
-          if (jobId) {
-            this.jobStore.updateProgress(jobId, progress || 0, progressMessage);
-          }
-        } catch (error) {
-          this.logger.error('Error processing export progress:', error.message);
-        }
-      },
-    });
-    
-    this.consumers.set('export.progress', progressConsumer);
-    this.logger.log('✅ Permanent consumer started for export.progress');
   }
 
   private async disconnect() {

@@ -45,14 +45,13 @@ export class KafkaService implements OnModuleInit {
           
           // correlationId is in the PAYLOAD, not in headers!
           const correlationId = payload.correlationId;
-          const jobId = payload.jobId;
           
           if (!correlationId) {
             this.logger.warn('⚠️ Received message without correlationId in payload');
             return;
           }
           
-          this.logger.log(`📨 Received export request: correlationId=${correlationId}, jobId=${jobId}`);
+          this.logger.log(`📨 Received export request: correlationId=${correlationId}`);
 
           // Check request type
           let result;
@@ -63,18 +62,8 @@ export class KafkaService implements OnModuleInit {
               schema: await this.exportService.getDatabaseSchema(),
             };
           } else {
-            // Progress callback to send progress updates
-            const progressCallback = jobId ? (progress: number, message: string) => {
-              this.sendProgress(jobId, progress, message).catch(err => {
-                this.logger.error(`Failed to send progress: ${err.message}`);
-              });
-            } : undefined;
-
-            // Process export request with progress tracking
-            result = await this.exportService.processExportRequest(
-              payload as ExportQueryDto, 
-              progressCallback,
-            );
+            // Process export request
+            result = await this.exportService.processExportRequest(payload as ExportQueryDto);
           }
 
           // Send response back
@@ -97,32 +86,6 @@ export class KafkaService implements OnModuleInit {
     });
 
     this.logger.log('✅ Permanent consumer started for export.request');
-  }
-
-  /**
-   * Send progress update to export.progress topic
-   */
-  private async sendProgress(jobId: string, progress: number, message: string) {
-    try {
-      await this.producer.send({
-        topic: 'export.progress',
-        messages: [
-          {
-            key: jobId,
-            value: JSON.stringify({
-              jobId,
-              progress,
-              message,
-              timestamp: Date.now(),
-            }),
-          },
-        ],
-      });
-
-      this.logger.debug(`📊 Progress sent for job ${jobId}: ${progress}% - ${message}`);
-    } catch (error) {
-      this.logger.error(`❌ Failed to send progress: ${error.message}`);
-    }
   }
 
   /**

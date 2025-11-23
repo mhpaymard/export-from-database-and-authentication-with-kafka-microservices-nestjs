@@ -45,8 +45,4 @@ export class ExportQueryDto {
   @IsOptional()
   @IsString()
   token?: string; // JWT token from Gateway
-
-  @IsOptional()
-  @IsString()
-  jobId?: string; // Job ID for SSE progress tracking
 }
